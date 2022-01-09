@@ -1,0 +1,16 @@
+name: ArrowRoyale
+version: 1.0.1
+main: mc.fenderas.arrowroyale.ArrowRoyale
+api-version: 1.18
+softdepend: [PlaceholderAPI, Vault]
+permissions:
+  arrowroyale.admin:
+    description: To access the whole array of commands of Arrow Royale
+  arrowroyale.admin.debug:
+    description: To access debug commands that are generally cheating
+commands:
+  arrowRoyale:
+    description: starts Arrow Royale
+    usage: /<command> <do> <state>
+
+
