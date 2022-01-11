@@ -3,19 +3,14 @@ package mc.fenderas.arrowroyale.events;
 import mc.fenderas.arrowroyale.ArrowRoyale;
 import mc.fenderas.arrowroyale.manager.GameManager;
 import mc.fenderas.arrowroyale.manager.GameStates;
-import mc.fenderas.arrowroyale.utils.LocationUtil;
+import mc.fenderas.arrowroyale.tasks.ScoreboardChangeTimer;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
-import org.bukkit.event.player.PlayerChangedWorldEvent;
-import org.bukkit.event.player.PlayerDropItemEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerRespawnEvent;
-import org.spigotmc.event.player.PlayerSpawnLocationEvent;
+import org.bukkit.event.player.*;
 
 public class PlayerEvents implements Listener
 {
@@ -41,8 +36,7 @@ public class PlayerEvents implements Listener
     {
         Player player = event.getPlayer();
         if (player.getWorld() == ArrowRoyale.getMinigameWorld()){
-            player.sendMessage("Joined");
-            manager.getScoreboardInit().addPlayer(player, GameStates.LOBBY, true);
+            manager.getPlayerScoreboard().addScoreboard(player);
         }
     }
 
@@ -51,7 +45,16 @@ public class PlayerEvents implements Listener
     {
         Player player = event.getPlayer();
         if (player.getWorld() == ArrowRoyale.getMinigameWorld()){
-            manager.getScoreboardInit().addPlayer(player, GameStates.LOBBY, true);
+            manager.getPlayerScoreboard().addScoreboard(player);
+        }
+    }
+
+    @EventHandler
+    public void playerDisconnect(PlayerQuitEvent event)
+    {
+        Player player = event.getPlayer();
+        if (player.getWorld() == ArrowRoyale.getMinigameWorld()){
+            manager.getPlayerScoreboard().removeScoreboard(player);
         }
     }
 
@@ -61,7 +64,8 @@ public class PlayerEvents implements Listener
         Player player = event.getPlayer();
         if (manager.state == GameStates.ACTIVE){
             if (player.getWorld() == ArrowRoyale.getMinigameWorld()){
-
+                ScoreboardChangeTimer timer = new ScoreboardChangeTimer(Bukkit.getPlayer(player.getUniqueId()), manager, GameStates.LOBBY, 1);
+                timer.runTaskTimer(ArrowRoyale.getPlugin(), 0, 2);
             }
         }
     }
@@ -72,7 +76,7 @@ public class PlayerEvents implements Listener
         Player player = event.getEntity().getKiller();
         if (manager.state == GameStates.ACTIVE){
             if(player != null){
-                manager.getScoreboardInit().setPlayerCurrentScore(player.getName(), 1);
+                manager.getRoundScoreboard().setScore(player, 1);
             }
         }
     }

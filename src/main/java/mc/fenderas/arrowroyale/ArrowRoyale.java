@@ -16,6 +16,7 @@ import org.bukkit.World;
 import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.ServicePriority;
@@ -85,6 +86,12 @@ public final class ArrowRoyale extends JavaPlugin {
         if (isUsingVault()){
             getServer().getConsoleSender().sendMessage(ChatColor.GREEN + "[ArrowRoyale] Vault is Successfully Hooked");
         }
+
+        if (!getMinigameWorld().getPlayers().isEmpty()){
+            for (Player player : getMinigameWorld().getPlayers()){
+                manager.getPlayerScoreboard().addScoreboard(player);
+            }
+        }
     }
 
     @Override
@@ -114,6 +121,8 @@ public final class ArrowRoyale extends JavaPlugin {
         getCoordiatesSection().addDefault("xMax", xMax);
         getCoordiatesSection().addDefault("zMin", zMin);
         getCoordiatesSection().addDefault("zMax", zMax);
+
+        getRoundSection().addDefault("secondsPerRound", 60);
 
         getPlaceholderAPISection().addDefault("usePlaceholderAPI", true);
         getVaultSection().addDefault("useVault", true);
@@ -167,6 +176,7 @@ public final class ArrowRoyale extends JavaPlugin {
 
     public static ConfigurationSection getCoordiatesSection(){return getSection("mapCoords", getSpawnSection());}
     public static ConfigurationSection getSpawnSection(){return getSection("spawn");}
+    public static ConfigurationSection getRoundSection(){return getSection("round");}
     public static ConfigurationSection getPluginsSection(){return getSection("plugins");}
     public static ConfigurationSection getPlaceholderAPISection(){return getSection("placeholderAPI", getPluginsSection());}
     public static ConfigurationSection getVaultSection(){return getSection("vault", getPluginsSection());}

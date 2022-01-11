@@ -62,7 +62,21 @@ public class ArrowRoyaleCommands implements CommandExecutor, TabCompleter {
                         if (player.hasPermission("arrowroyale.admin.debug")) {
                             if (args[1].equalsIgnoreCase("givemekills")) {
                                 player.sendMessage("Points Added");
-                                manager.getScoreboardInit().setPlayerCurrentScore(player.getName(), Integer.parseInt(args[2]));
+                                manager.getRoundScoreboard().setScore(player, Integer.parseInt(args[2]));
+                            }
+                            if (args[1].equalsIgnoreCase("changemyscoreboardstate")) {
+                                player.sendMessage("Scoreboard Changed");
+                                GameStates states = GameStates.valueOf(args[1].toUpperCase(Locale.ROOT));
+                                switch (states){
+                                    case LOBBY, END, START -> {
+                                        manager.getRoundScoreboard().removePlayer(player);
+                                        manager.getPlayerScoreboard().addScoreboard(player);
+                                    }
+                                    case ACTIVE -> {
+                                        manager.getRoundScoreboard().addPlayer(player);
+                                        manager.getPlayerScoreboard().removeScoreboard(player);
+                                    }
+                                }
                             }
                         }
                         else{
@@ -131,6 +145,7 @@ public class ArrowRoyaleCommands implements CommandExecutor, TabCompleter {
                         if (manager.state == GameStates.ACTIVE){
                             List<String> choice = new ArrayList<>();
                             choice.add("givemekills");
+                            choice.add("changemyscoreboardstate");
                             return choice;
                         }else{
                             sender.sendMessage("This command is only used when the game is Active!");
@@ -148,6 +163,13 @@ public class ArrowRoyaleCommands implements CommandExecutor, TabCompleter {
                     List<String> modes = new ArrayList<>();
                     modes.add(EditAxeModes.RANDOMSPAWN.toString().toLowerCase(Locale.ROOT));
                     modes.add(EditAxeModes.SPAWNPOINT.toString().toLowerCase(Locale.ROOT));
+                    return modes;
+                }else if(args[1].equalsIgnoreCase("changemyscoreboardstate")){
+                    List<String> modes = new ArrayList<>();
+                    modes.add(GameStates.LOBBY.toString().toLowerCase(Locale.ROOT));
+                    modes.add(GameStates.START.toString().toLowerCase(Locale.ROOT));
+                    modes.add(GameStates.ACTIVE.toString().toLowerCase(Locale.ROOT));
+                    modes.add(GameStates.END.toString().toLowerCase(Locale.ROOT));
                     return modes;
                 }
             }

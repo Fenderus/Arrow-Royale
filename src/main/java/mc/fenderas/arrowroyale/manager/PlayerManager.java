@@ -43,12 +43,6 @@ public class PlayerManager
         }
     }
 
-    public void showScoreBoards(GameStates states){
-        for (Player player : currentPlayers){
-            showScoreBoard(player, states);
-        }
-    }
-
     public void disableScoreBoards(){currentPlayers.forEach(this::disableScoreBoard);}
 
     public void respawnPlayers(){currentPlayers.forEach(this::respawnPlayer);}
@@ -88,10 +82,6 @@ public class PlayerManager
         player.setScoreboard(Bukkit.getScoreboardManager().getNewScoreboard());
     }
 
-    public void showScoreBoard(Player player, GameStates states){
-        manager.getScoreboardInit().addPlayer(player, states, true);
-    }
-
     public void displayBossBar(Player player, BossBarManager manager){
         manager.addPlayer(player);
     }
@@ -111,11 +101,15 @@ public class PlayerManager
 
     public void rewardWinner(){
         if (ArrowRoyale.isUsingVault()){
-            Player winner = manager.getScoreboardInit().getWinner();
+            Player winner = manager.getRoundScoreboard().getWinnerPlayer();
             if (winner != null){
-                ArrowRoyale.getEconomy().depositPlayer(winner, manager.getScoreboardInit().getWinnerPoints());
+                ArrowRoyale.getEconomy().depositPlayer(winner, manager.getRoundScoreboard().getWinnerScore());
             }
         }
+    }
+
+    public void removeCurrentPlayer(Player player){
+        currentPlayers.remove(player);
     }
 
     public void resetPlayerList(){
