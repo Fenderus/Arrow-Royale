@@ -1,7 +1,9 @@
 package mc.fenderas.arrowroyale.manager;
 
 import mc.fenderas.arrowroyale.ArrowRoyale;
+import mc.fenderas.arrowroyale.events.PlayerEvents;
 import mc.fenderas.arrowroyale.files.PlayerScoresFile;
+import mc.fenderas.arrowroyale.inventories.LobbySelection;
 import mc.fenderas.arrowroyale.others.BossBarManager;
 import mc.fenderas.arrowroyale.utils.LocationUtil;
 import org.bukkit.Bukkit;
@@ -9,6 +11,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
+import org.bukkit.event.player.PlayerEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scoreboard.Scoreboard;
 
@@ -19,13 +22,15 @@ public class PlayerManager
 {
 
     private List<Player> currentPlayers = new ArrayList<>();
-    private GameManager manager;
+    private LobbyManager manager;
 
-    public PlayerManager(GameManager manager){
+    public PlayerManager(LobbyManager manager){
         this.manager = manager;
     }
 
-    public void setPlayers(){ArrowRoyale.getMinigameWorld().getPlayers().forEach(this::setPlayer);}
+    public void setPlayers(List<Player> players){
+        currentPlayers = players;
+    }
 
     public void giveKits(){currentPlayers.forEach(this::giveKit);}
 
@@ -47,9 +52,7 @@ public class PlayerManager
 
     public void respawnPlayers(){currentPlayers.forEach(this::respawnPlayer);}
 
-    public void setPlayer(Player player){
-        currentPlayers.add(player);
-    }
+    public void addLobbyItemToPlayers(){manager.getWorld().getPlayers().forEach(this::addLobbyItemToPlayer);}
 
     public void giveKit(Player player){
         clearInventory(player);
@@ -87,14 +90,18 @@ public class PlayerManager
     }
 
     public void respawnPlayer(Player player){
-        if (ArrowRoyale.getMinigameWorld().getBlockAt(ArrowRoyale.getMinigameWorld().getSpawnLocation()).getType() == Material.AIR){
-            player.teleport(ArrowRoyale.getMinigameWorld().getSpawnLocation());
+        if (manager.getWorld().getBlockAt(manager.getWorld().getSpawnLocation()).getType() == Material.AIR){
+            player.teleport(manager.getWorld().getSpawnLocation());
         }else{
-            Location location = ArrowRoyale.getMinigameWorld().getSpawnLocation();
+            Location location = manager.getWorld().getSpawnLocation();
             double prevY = location.getY();
             location.setY(prevY + 1);
             player.teleport(location);
         }
+    }
+
+    public void addLobbyItemToPlayer(Player player){
+        player.getInventory().setItem(ArrowRoyale.getLobbyItemSection().getInt("slot"), PlayerEvents.selectionOpener);
     }
 
     //Methods w.o. Arguments that don't get access to all Players

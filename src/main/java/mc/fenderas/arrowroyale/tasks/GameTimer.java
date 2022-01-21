@@ -1,6 +1,6 @@
 package mc.fenderas.arrowroyale.tasks;
 
-import mc.fenderas.arrowroyale.manager.GameManager;
+import mc.fenderas.arrowroyale.manager.LobbyManager;
 import mc.fenderas.arrowroyale.manager.GameStates;
 import mc.fenderas.arrowroyale.others.BossBarManager;
 import mc.fenderas.arrowroyale.others.ChatPlayers;
@@ -8,9 +8,9 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 public class GameTimer extends BukkitRunnable {
 
-    public GameManager manager;
+    public LobbyManager manager;
 
-    public GameTimer(GameManager manager, int maxTime, boolean tellTime, GameStates state, String tell){
+    public GameTimer(LobbyManager manager, int maxTime, boolean tellTime, GameStates state, String tell){
         this.manager = manager;
         this.timeLeft = maxTime;
         this.maxTime = maxTime;
@@ -19,7 +19,7 @@ public class GameTimer extends BukkitRunnable {
         this.tell = tell;
     }
 
-    public GameTimer(GameManager manager, int maxTime, boolean tellTime, GameStates state, String tell, boolean bar){
+    public GameTimer(LobbyManager manager, int maxTime, boolean tellTime, GameStates state, String tell, boolean bar){
         this.manager = manager;
         this.timeLeft = maxTime;
         this.maxTime = maxTime;
@@ -41,7 +41,7 @@ public class GameTimer extends BukkitRunnable {
     @Override
     public void run() {
         if(tellTime){
-            ChatPlayers.chatPlayersInArrowRoyale(timeLeft + " " + tell);
+            ChatPlayers.chatPlayersInArrowRoyale(timeLeft + " " + tell, manager);
         }
 
         timeLeft--;

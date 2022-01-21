@@ -27,7 +27,7 @@ public class ChestSpawners
 
     public void SpawnChests(World world){
         removeChests();
-        for (int i = 0; i < ArrowRoyale.getSection("chest", ArrowRoyale.getSpawnSection()).getInt("chests_spawned"); i++){
+        for (int i = 0; i < ArrowRoyale.getChestSection(world.getName()).getInt("max_chests"); i++){
             Location location = LocationUtil.generateRandomLocation(world, true);
             double lastY = location.getY();
             location.setY(lastY + 1);

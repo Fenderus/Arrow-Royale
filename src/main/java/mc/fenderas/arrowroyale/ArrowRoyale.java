@@ -2,12 +2,17 @@ package mc.fenderas.arrowroyale;
 
 import mc.fenderas.arrowroyale.commands.ArrowRoyaleCommands;
 import mc.fenderas.arrowroyale.events.BlockEvents;
+import mc.fenderas.arrowroyale.events.InventoryEvents;
 import mc.fenderas.arrowroyale.events.ItemEvents;
 import mc.fenderas.arrowroyale.events.PlayerEvents;
 import mc.fenderas.arrowroyale.files.PlayerScoresFile;
 import mc.fenderas.arrowroyale.items.ItemManager;
 import mc.fenderas.arrowroyale.manager.GameManager;
+import mc.fenderas.arrowroyale.manager.GameStates;
+import mc.fenderas.arrowroyale.manager.LobbyManager;
 import mc.fenderas.arrowroyale.placeholder.ArrowRoyaleExpansion;
+import mc.fenderas.arrowroyale.simpleconfig.SimpleConfig;
+import mc.fenderas.arrowroyale.simpleconfig.SimpleConfigManager;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -21,10 +26,13 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
 
 public final class ArrowRoyale extends JavaPlugin {
 
@@ -33,6 +41,7 @@ public final class ArrowRoyale extends JavaPlugin {
     private BlockEvents blockEvents;
     private PlayerEvents playerEvents;
     private ItemEvents itemEvents;
+    private InventoryEvents inventoryEvents;
 
     private Economy economy;
 
@@ -42,7 +51,8 @@ public final class ArrowRoyale extends JavaPlugin {
     public void onEnable() {
         // Plugin startup logic
         main = this;
-        startConfig();
+        //startConfig();
+        saveDefaultConfig();
 
         if(isUsingPlaceholderAPI()){
             if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") == null){
@@ -71,9 +81,11 @@ public final class ArrowRoyale extends JavaPlugin {
         blockEvents = new BlockEvents(manager);
         playerEvents = new PlayerEvents(manager);
         itemEvents = new ItemEvents();
+        inventoryEvents = new InventoryEvents(manager);
         getServer().getPluginManager().registerEvents(blockEvents, this);
         getServer().getPluginManager().registerEvents(playerEvents, this);
         getServer().getPluginManager().registerEvents(itemEvents, this);
+        getServer().getPluginManager().registerEvents(inventoryEvents, this);
         ItemManager.init();
 
         getServer().getConsoleSender().sendMessage(ChatColor.GREEN + "[ArrowRoyale] Plugin is enabled");
@@ -87,42 +99,45 @@ public final class ArrowRoyale extends JavaPlugin {
             getServer().getConsoleSender().sendMessage(ChatColor.GREEN + "[ArrowRoyale] Vault is Successfully Hooked");
         }
 
-        if (!getMinigameWorld().getPlayers().isEmpty()){
-            for (Player player : getMinigameWorld().getPlayers()){
-                manager.getPlayerScoreboard().addScoreboard(player);
-            }
-        }
+        manager.lobbies.forEach(this::setupScoreboards);
     }
 
     @Override
     public void onDisable() {
         // Plugin shutdown logic
-        getServer().getConsoleSender().sendMessage(ChatColor.RED + "[ArrowRoyale]: Plugin is disabled");
+        main.saveConfig();
+        for (LobbyManager lobbies : manager.lobbies) {
+            if(lobbies.state == GameStates.ACTIVE)
+            {
+                lobbies.getChestSpawners().removeChests();
+            }
+        }
+        getServer().getConsoleSender().sendMessage(ChatColor.RED + "[ArrowRoyale] Plugin is disabled");
+    }
+
+    @NotNull
+    @Override
+    public FileConfiguration getConfig() {
+        return super.getConfig();
     }
 
     public void startConfig(){
-        saveDefaultConfig();
         //getConfig().options().copyHeader(true);;
         getConfig().options().copyDefaults(true);
-        getSpawnSection().addDefault("minigame_world", "world");
 
         List<String> exemptedBlocks = new ArrayList<>();
         exemptedBlocks.add(Material.OAK_PLANKS.toString());
-        getSpawnSection().addDefault("exempted_blocks", exemptedBlocks);
+        getRoundSection().addDefault("breakable_blocks", exemptedBlocks);
 
         List<String> unspawnableBlocks = new ArrayList<>();
         unspawnableBlocks.add(Material.LAVA.toString());
         getSpawnSection().addDefault("unspawnable_Blocks", unspawnableBlocks);
 
-        getSection("chest", getSpawnSection()).addDefault("chests_spawned", 2);
-
-        int xMin = -100, xMax = 100, zMin = -100, zMax = 100;
-        getCoordiatesSection().addDefault("xMin", xMin);
-        getCoordiatesSection().addDefault("xMax", xMax);
-        getCoordiatesSection().addDefault("zMin", zMin);
-        getCoordiatesSection().addDefault("zMax", zMax);
+        setupLobbyWorldsSection();
 
         getRoundSection().addDefault("secondsPerRound", 60);
+
+        setupGUIItemsSection();
 
         getPlaceholderAPISection().addDefault("usePlaceholderAPI", true);
         getVaultSection().addDefault("useVault", true);
@@ -157,35 +172,62 @@ public final class ArrowRoyale extends JavaPlugin {
     public static Plugin getPlugin(){
         return main;
     }
+    public static JavaPlugin getJavaPlugin(){
+        return main;
+    }
 
-    public static World getMinigameWorld(){
-        return Bukkit.getWorld(getMinigameWorldName());
-    }
-    public static String getMinigameWorldName(){
-        return getSpawnSection().getString("minigame_world");
-    }
+    public static List<String> getWorldNames(){return List.copyOf(getLobbyWorldsSection().getKeys(false));}
+    public static List<String> getCustomGUIItemNames(){return List.copyOf(getCustomGUIItemsSection().getKeys(false));}
     public static FileConfiguration getMainConfig(){
         return main.getConfig();
     }
 
-    public static List<String> getExemptedBlocks(){return getSpawnSection().getStringList("exempted_blocks");}
+    public static List<String> getBreakableBlocks(){return getRoundSection().getStringList("breakable_blocks");}
+    public static List<String> getUnspawnableBlocks(){return getSpawnSection().getStringList("unspawnable_Blocks");}
 
     public static BlockEvents getBlockEvents() {return main.blockEvents;}
     public static PlayerEvents getPlayerEvents() {return main.playerEvents;}
     public static ItemEvents getItemEvents() {return main.itemEvents;}
 
-    public static ConfigurationSection getCoordiatesSection(){return getSection("mapCoords", getSpawnSection());}
+    public static ConfigurationSection getLobbyItemSection(){return getSection("lobby_hand_item", getGUIItemsSection());}
+    public static ConfigurationSection getCoordinatesSection(String worldName) {return getSection("mapCoords", getSpecificSpawnSection(worldName));}
+    public static ConfigurationSection getChestSection(String worldName){return getSection("chests", getSpecificWorldSection(worldName));}
+    public static ConfigurationSection getSpecificSpawnSection(String worldName){return getSection("spawn", getSpecificWorldSection(worldName));}
+    public static ConfigurationSection getWorldBorderSection(String worldName){return getSection("border", getSpecificWorldSection(worldName));}
+    public static ConfigurationSection getLobbyWorldsSection(){return getSection("lobby_worlds");}
     public static ConfigurationSection getSpawnSection(){return getSection("spawn");}
     public static ConfigurationSection getRoundSection(){return getSection("round");}
     public static ConfigurationSection getPluginsSection(){return getSection("plugins");}
     public static ConfigurationSection getPlaceholderAPISection(){return getSection("placeholderAPI", getPluginsSection());}
     public static ConfigurationSection getVaultSection(){return getSection("vault", getPluginsSection());}
+    public static ConfigurationSection getGUIItemsSection(){return getSection("gui_items");}
+    public static ConfigurationSection getCustomGUIItemsSection(){return getSection("custom_items", getGUIItemsSection());}
     public static boolean isUsingPlaceholderAPI(){return getPlaceholderAPISection().getBoolean("usePlaceholderAPI");}
     public static boolean isUsingVault(){return getVaultSection().getBoolean("useVault");}
     public static Economy getEconomy() {return main.economy;}
 
+    public static ConfigurationSection getSpecificWorldSection(String name){
+        for (String worldName : getWorldNames()) {
+            if(Objects.equals(worldName, name)){
+                return getSection(name, getLobbyWorldsSection());
+            }
+        }
+        return null;
+    }
+
+    public static ConfigurationSection getSpecificCustomGUIItemSection(String name){
+        for (String customGUIItemName : getCustomGUIItemNames()){
+            if(Objects.equals(name, customGUIItemName)){
+                return getSection(customGUIItemName, getCustomGUIItemsSection());
+            }
+        }
+        return null;
+    }
+
     public static void saveMainConfig(){
-        main.saveConfig();
+        SimpleConfigManager manager = new SimpleConfigManager(main);
+        SimpleConfig config = manager.getNewConfig("config.yml");
+        config.saveConfig();
         main.saveDefaultConfig();
     }
 
@@ -203,5 +245,52 @@ public final class ArrowRoyale extends JavaPlugin {
 
         economy = rsp.getProvider();
         return (economy != null);
+    }
+
+    private void setupScoreboards(LobbyManager manager){
+        if (!manager.getWorld().getPlayers().isEmpty()){
+            for (Player player : manager.getWorld().getPlayers()){
+                manager.getPlayerScoreboard().addScoreboard(player);
+            }
+        }
+    }
+
+    private void setupLobbyWorldsSection(){
+        getSection("world", getLobbyWorldsSection());
+        for (String section : getWorldNames()) {
+            int xMin = -100, xMax = 100, zMin = -100, zMax = 100;
+            ConfigurationSection worldSection = getSection(section, getLobbyWorldsSection());
+            ConfigurationSection spawnSection = getSection("spawn", worldSection);
+            getSection("mapCoords", spawnSection).addDefault("xMin", xMin);
+            getSection("mapCoords", spawnSection).addDefault("xMax", xMax);
+            getSection("mapCoords", spawnSection).addDefault("zMin", zMin);
+            getSection("mapCoords", spawnSection).addDefault("zMax", zMax);
+
+            getSection("chests", worldSection).addDefault("max_chests", 4);
+
+            getSection("border", worldSection).addDefault("max_border_size", 500);
+        }
+    }
+
+    private void setupGUIItemsSection(){
+
+        getLobbyItemSection().addDefault("display_name", "Lobbies");
+        getLobbyItemSection().addDefault("slot", 8);
+        getLobbyItemSection().addDefault("material", Material.BOOKSHELF.toString().toUpperCase(Locale.ROOT));
+        List<String> itemLore = new ArrayList<>();
+        itemLore.add("Lorem Ipsum");
+        getLobbyItemSection().addDefault("lore", itemLore);
+
+        getSection("Lobby_1", getCustomGUIItemsSection());
+        for (String section : getCustomGUIItemNames()) {
+            ConfigurationSection itemSection = getSection(section, getCustomGUIItemsSection());
+            itemSection.addDefault("display_name", "Lobby 1");
+            itemSection.addDefault("world", "world");
+            itemSection.addDefault("slot", 10);
+            itemSection.addDefault("material", Material.BOOKSHELF.toString().toUpperCase(Locale.ROOT));
+            List<String> lore = new ArrayList<>();
+            lore.add("Lorem Ipsum");
+            itemSection.addDefault("lore", lore);
+        }
     }
 }

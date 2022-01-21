@@ -3,6 +3,7 @@ package mc.fenderas.arrowroyale.events;
 import mc.fenderas.arrowroyale.ArrowRoyale;
 import mc.fenderas.arrowroyale.manager.GameManager;
 import mc.fenderas.arrowroyale.manager.GameStates;
+import mc.fenderas.arrowroyale.manager.LobbyManager;
 import mc.fenderas.arrowroyale.others.BrokenBlock;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -31,9 +32,10 @@ public class BlockEvents implements Listener
     @EventHandler
     public void placeBlock(BlockPlaceEvent event)
     {
-        if (manager.state == GameStates.ACTIVE){
-            Player player = event.getPlayer();
-            if (player.getWorld() == ArrowRoyale.getMinigameWorld()){
+        Player player = event.getPlayer();
+        LobbyManager lobbyManager = manager.getLobbyManager(player);
+        if (lobbyManager.state == GameStates.ACTIVE){
+            if (player.getWorld() == lobbyManager.getWorld()){
                 placedBlocks.add(event.getBlockPlaced());
             }
         }
@@ -43,10 +45,11 @@ public class BlockEvents implements Listener
     public void breakBlock(BlockBreakEvent event)
     {
         Player player = event.getPlayer();
+        LobbyManager lobbyManager = manager.getLobbyManager(player);
         Block block = event.getBlock();
-        if (manager.state == GameStates.ACTIVE){
-            if (player.getWorld() == ArrowRoyale.getMinigameWorld()){
-                if (!ArrowRoyale.getExemptedBlocks().contains(block.getBlockData().getMaterial().toString())){
+        if (lobbyManager.state == GameStates.ACTIVE){
+            if (player.getWorld() == lobbyManager.getWorld()){
+                if (!ArrowRoyale.getBreakableBlocks().contains(block.getBlockData().getMaterial().toString())){
                     event.setCancelled(true);
                 }else {
                     if(!placedBlocks.contains(block)){

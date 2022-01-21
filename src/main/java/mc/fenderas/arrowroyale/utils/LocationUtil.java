@@ -15,16 +15,16 @@ public class LocationUtil
     public static List<Material> badBlocks = new ArrayList<>();
 
     static {
-        for (String mat : ArrowRoyale.getSpawnSection().getStringList("unspawnable_Blocks")){
+        for (String mat : ArrowRoyale.getUnspawnableBlocks()){
             badBlocks.add(Material.getMaterial(mat.toUpperCase(Locale.ROOT)));
         }
 
     }
 
     public static Location generateRandomLocation(World world, boolean checkArea){
-        int x = RandomUtil.randomIntProper(ArrowRoyale.getCoordiatesSection().getInt("xMin"), ArrowRoyale.getCoordiatesSection().getInt("xMax"));
+        int x = RandomUtil.randomIntProper(ArrowRoyale.getCoordinatesSection(world.getName()).getInt("xMin"), ArrowRoyale.getCoordinatesSection(world.getName()).getInt("xMax"));
         int y = 150;
-        int z = RandomUtil.randomIntProper(ArrowRoyale.getCoordiatesSection().getInt("zMin"), ArrowRoyale.getCoordiatesSection().getInt("zMax"));
+        int z = RandomUtil.randomIntProper(ArrowRoyale.getCoordinatesSection(world.getName()).getInt("zMin"), ArrowRoyale.getCoordinatesSection(world.getName()).getInt("zMax"));
 
         Location randomLocation = new Location(world, x, y ,z);
         y = randomLocation.getWorld().getHighestBlockYAt(randomLocation);
@@ -50,5 +50,11 @@ public class LocationUtil
         Block above = location.getWorld().getBlockAt(x,y + 2,z);
 
         return !(badBlocks.contains(below.getType()) || (block.getType().isSolid()) || (above.getType().isSolid()));
+    }
+
+    public static void spawnPlayerToNewWorld(Player player, World world){
+        Location spawn = world.getSpawnLocation();
+        Location anotherWorld = new Location(world, spawn.getX(), spawn.getY(), spawn.getBlockZ());
+        player.teleport(anotherWorld);
     }
 }

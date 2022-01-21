@@ -2,12 +2,13 @@ package mc.fenderas.arrowroyale.tasks;
 
 import mc.fenderas.arrowroyale.manager.GameManager;
 import mc.fenderas.arrowroyale.manager.GameStates;
+import mc.fenderas.arrowroyale.manager.LobbyManager;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
 public class ScoreboardChangeTimer extends BukkitRunnable
 {
-    public ScoreboardChangeTimer(Player player, GameManager manager, GameStates state, int timeLeft){
+    public ScoreboardChangeTimer(Player player, LobbyManager manager, GameStates state, int timeLeft){
         this.player = player;
         this.manager = manager;
         this.state = state;
@@ -17,7 +18,7 @@ public class ScoreboardChangeTimer extends BukkitRunnable
     int timeLeft = 1;
 
     GameStates state;
-    GameManager manager;
+    LobbyManager manager;
     Player player;
 
     @Override
