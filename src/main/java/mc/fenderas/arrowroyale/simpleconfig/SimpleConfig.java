@@ -61,12 +61,16 @@ public class SimpleConfig {
         return this.config.getBoolean(path, def);
     }
 
-    public void createSection(String path) {
-        this.config.createSection(path);
+    public ConfigurationSection createSection(String path) {
+        return this.config.createSection(path);
     }
 
     public ConfigurationSection getConfigurationSection(String path) {
         return this.config.getConfigurationSection(path);
+    }
+
+    public boolean isConfigurationSection(String path){
+        return this.config.isConfigurationSection(path);
     }
 
     public double getDouble(String path) {
@@ -489,6 +493,9 @@ public class SimpleConfig {
     public void set(String path, Object value) {
         this.config.set(path, value);
     }
+    public void set(String path, Object value, ConfigurationSection section) {
+        section.set(path, value);
+    }
 
     public void set(String path, Object value, String comment) {
         if (!this.config.contains(path)) {
@@ -515,6 +522,31 @@ public class SimpleConfig {
 
         this.config.set(path, value);
 
+    }
+
+    public void set(String path, Object value, String[] comment, ConfigurationSection section) {
+
+        for (String comm : comment) {
+
+            if (!section.contains(path)) {
+                section.set(manager.getPluginName() + "_COMMENT_"
+                        + comments, " " + comm);
+                comments++;
+            }
+
+        }
+        section.set(path, value);
+    }
+
+    public void set(String path, Object value, String comment, ConfigurationSection section) {
+
+        if (!section.contains(path)) {
+            section.set(manager.getPluginName() + "_COMMENT_" + comments,
+                    " " + comment);
+            comments++;
+        }
+
+        section.set(path, value);
     }
 
     public void setHeader(String[] header) {

@@ -1,18 +1,18 @@
-#This is where you can edit round settings
+# This is where you can edit round settings
 round:
-  #This is Used for Block Breaking Protection
+  # This is Used for Block Breaking Protection
   breakable_blocks:
     - OAK_PLANKS
   secondsPerRound: 60
 
-#This is where you can change spawn settings
+# This is where you can change spawn settings
 spawn:
-  #This is Used to Protect Spawn-ables(Players and Chests) from spawning in specific blocks
+  # This is Used to Protect Spawn-ables(Players and Chests) from spawning in specific blocks
   unspawnable_Blocks:
     - LAVA
     - WATER
 
-#This is where you can add imported worlds as Lobbies
+# This is where you can add imported worlds as Lobbies
 lobby_worlds:
   world:
     spawn:
@@ -26,7 +26,7 @@ lobby_worlds:
     border:
       max_border_size: 500
 
-#This is Used for the Lobby Selector
+# This is Used for the Lobby Selector
 gui_items:
   lobby_hand_item:
     display_name: '&6Lobbies'
@@ -43,7 +43,7 @@ gui_items:
       lore:
         - '&1What?'
 
-#This is Plugin Hooking Management
+# This is Plugin Hooking Management
 plugins:
   placeholderAPI:
     usePlaceholderAPI: true

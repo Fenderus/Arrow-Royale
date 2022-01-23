@@ -2,7 +2,7 @@ name: ArrowRoyale
 version: 1.0.1
 main: mc.fenderas.arrowroyale.ArrowRoyale
 api-version: 1.18
-softdepend: [PlaceholderAPI, Vault]
+softdepend: [PlaceholderAPI, Vault, Multiplayer-Core]
 permissions:
   arrowroyale.admin:
     description: To access the whole array of commands of Arrow Royale

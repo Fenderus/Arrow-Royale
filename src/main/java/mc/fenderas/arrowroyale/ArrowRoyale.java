@@ -28,11 +28,10 @@ import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Objects;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
 
 public final class ArrowRoyale extends JavaPlugin {
 
@@ -44,6 +43,9 @@ public final class ArrowRoyale extends JavaPlugin {
     private InventoryEvents inventoryEvents;
 
     private Economy economy;
+
+    //private SimpleConfigManager configManager;
+    //private SimpleConfig config;
 
     public static final String version = "1.1.0";
 
@@ -105,42 +107,36 @@ public final class ArrowRoyale extends JavaPlugin {
     @Override
     public void onDisable() {
         // Plugin shutdown logic
-        main.saveConfig();
-        for (LobbyManager lobbies : manager.lobbies) {
-            if(lobbies.state == GameStates.ACTIVE)
-            {
-                lobbies.getChestSpawners().removeChests();
+        if (manager != null){
+            for (LobbyManager lobbies : manager.lobbies) {
+                if(lobbies.state == GameStates.ACTIVE)
+                {
+                    lobbies.getChestSpawners().removeChests();
+                }
             }
         }
         getServer().getConsoleSender().sendMessage(ChatColor.RED + "[ArrowRoyale] Plugin is disabled");
     }
 
-    @NotNull
-    @Override
-    public FileConfiguration getConfig() {
-        return super.getConfig();
-    }
-
     public void startConfig(){
         //getConfig().options().copyHeader(true);;
-        getConfig().options().copyDefaults(true);
 
         List<String> exemptedBlocks = new ArrayList<>();
         exemptedBlocks.add(Material.OAK_PLANKS.toString());
-        getRoundSection().addDefault("breakable_blocks", exemptedBlocks);
+        getRoundSection().set("breakable_blocks", exemptedBlocks);
 
         List<String> unspawnableBlocks = new ArrayList<>();
         unspawnableBlocks.add(Material.LAVA.toString());
-        getSpawnSection().addDefault("unspawnable_Blocks", unspawnableBlocks);
+        getSpawnSection().set("unspawnable_Blocks", unspawnableBlocks);
 
         setupLobbyWorldsSection();
 
-        getRoundSection().addDefault("secondsPerRound", 60);
+        getRoundSection().set("secondsPerRound", 60);
 
         setupGUIItemsSection();
 
-        getPlaceholderAPISection().addDefault("usePlaceholderAPI", true);
-        getVaultSection().addDefault("useVault", true);
+        getPlaceholderAPISection().set("usePlaceholderAPI", true);
+        getVaultSection().set("useVault", true);
 
         saveMainConfig();
     }
@@ -148,7 +144,7 @@ public final class ArrowRoyale extends JavaPlugin {
     public void startPlayerScoresFile(){
         PlayerScoresFile.setup();
         PlayerScoresFile.get().options().copyDefaults(true);
-        PlayerScoresFile.get().addDefault("Test", 1);
+        PlayerScoresFile.get().set("Test", 1);
         PlayerScoresFile.getSection("Players");
         PlayerScoresFile.save();
     }
@@ -178,6 +174,9 @@ public final class ArrowRoyale extends JavaPlugin {
 
     public static List<String> getWorldNames(){return List.copyOf(getLobbyWorldsSection().getKeys(false));}
     public static List<String> getCustomGUIItemNames(){return List.copyOf(getCustomGUIItemsSection().getKeys(false));}
+    //public static SimpleConfig getMainConfig(){
+        //return main.config;
+    //}
     public static FileConfiguration getMainConfig(){
         return main.getConfig();
     }
@@ -224,10 +223,16 @@ public final class ArrowRoyale extends JavaPlugin {
         return null;
     }
 
+    public void saveMyConfig(){
+        saveDefaultConfig();
+        saveConfig();
+    }
+
     public static void saveMainConfig(){
-        SimpleConfigManager manager = new SimpleConfigManager(main);
-        SimpleConfig config = manager.getNewConfig("config.yml");
-        config.saveConfig();
+        main.saveMyConfig();
+    }
+
+    public static void staticSaveDefaultConfig(){
         main.saveDefaultConfig();
     }
 
@@ -239,7 +244,7 @@ public final class ArrowRoyale extends JavaPlugin {
     private boolean setupEconomy() {
         RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
         if (rsp == null) {
-            getLogger().warning("Yes 2");
+            getLogger().warning("There is no Economy Plugin! Try Installing EssentialsX");
             return false;
         }
 
@@ -272,25 +277,26 @@ public final class ArrowRoyale extends JavaPlugin {
         }
     }
 
+
     private void setupGUIItemsSection(){
 
-        getLobbyItemSection().addDefault("display_name", "Lobbies");
-        getLobbyItemSection().addDefault("slot", 8);
-        getLobbyItemSection().addDefault("material", Material.BOOKSHELF.toString().toUpperCase(Locale.ROOT));
+        getLobbyItemSection().set("display_name", "Lobbies");
+        getLobbyItemSection().set("slot", 8);
+        getLobbyItemSection().set("material", Material.BOOKSHELF.toString().toUpperCase(Locale.ROOT));
         List<String> itemLore = new ArrayList<>();
         itemLore.add("Lorem Ipsum");
-        getLobbyItemSection().addDefault("lore", itemLore);
+        getLobbyItemSection().set("lore", itemLore);
 
         getSection("Lobby_1", getCustomGUIItemsSection());
         for (String section : getCustomGUIItemNames()) {
             ConfigurationSection itemSection = getSection(section, getCustomGUIItemsSection());
-            itemSection.addDefault("display_name", "Lobby 1");
-            itemSection.addDefault("world", "world");
-            itemSection.addDefault("slot", 10);
-            itemSection.addDefault("material", Material.BOOKSHELF.toString().toUpperCase(Locale.ROOT));
+            itemSection.set("display_name", "Lobby 1");
+            itemSection.set("world", "world");
+            itemSection.set("slot", 10);
+            itemSection.set("material", Material.BOOKSHELF.toString().toUpperCase(Locale.ROOT));
             List<String> lore = new ArrayList<>();
             lore.add("Lorem Ipsum");
-            itemSection.addDefault("lore", lore);
+            itemSection.set("lore", lore);
         }
     }
 }

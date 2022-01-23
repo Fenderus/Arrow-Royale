@@ -420,4 +420,115 @@ public class SimpleConfigManager {
 
     }
 
+    private static String prepareConfigString(String configString, JavaPlugin plugin) {
+
+        int lastLine = 0;
+        int headerLine = 0;
+
+        String[] lines = configString.split("\n");
+        StringBuilder config = new StringBuilder("");
+
+        for (String line : lines) {
+
+            if (line.startsWith(plugin.getDescription().getName() + "_COMMENT")) {
+                String comment = "#"
+                        + line.trim().substring(line.indexOf(":") + 1);
+
+                if (comment.startsWith("# +-")) {
+
+                    /*
+                     * If header line = 0 then it is header start, if it's equal
+                     * to 1 it's the end of header
+                     */
+
+                    if (headerLine == 0) {
+                        config.append(comment + "\n");
+
+                        lastLine = 0;
+                        headerLine = 1;
+
+                    } else if (headerLine == 1) {
+                        config.append(comment + "\n\n");
+
+                        lastLine = 0;
+                        headerLine = 0;
+
+                    }
+
+                } else {
+
+                    /*
+                     * Last line = 0 - Comment Last line = 1 - Normal path
+                     */
+
+                    String normalComment;
+
+                    if (comment.startsWith("# ' ")) {
+                        normalComment = comment.substring(0,
+                                        comment.length() - 1)
+                                .replaceFirst("# ' ", "# ");
+                    } else {
+                        normalComment = comment;
+                    }
+
+                    if (lastLine == 0) {
+                        config.append(normalComment + "\n");
+                    } else if (lastLine == 1) {
+                        config.append("\n" + normalComment + "\n");
+                    }
+
+                    lastLine = 0;
+
+                }
+
+            } else {
+                config.append(line + "\n");
+                lastLine = 1;
+            }
+
+        }
+
+        return config.toString();
+    }
+
+    public static void saveConfig(String configString, File file, JavaPlugin plugin) {
+        String configuration = prepareConfigString(configString, plugin);
+
+        try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+            writer.write(configuration);
+            writer.flush();
+            writer.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    public static File getConfigFile(String file, JavaPlugin plugin) {
+
+        if (file.isEmpty() || file == null) {
+            return null;
+        }
+
+        File configFile;
+
+        if (file.contains("/")) {
+
+            if (file.startsWith("/")) {
+                configFile = new File(plugin.getDataFolder()
+                        + file.replace("/", File.separator));
+            } else {
+                configFile = new File(plugin.getDataFolder() + File.separator
+                        + file.replace("/", File.separator));
+            }
+
+        } else {
+            configFile = new File(plugin.getDataFolder(), file);
+        }
+
+        return configFile;
+
+    }
 }

@@ -43,6 +43,13 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <argLine>--add-opens java.xml/jdk.xml.internal=ALL-UNNAMED</argLine>
+                </configuration>
+            </plugin>
         </plugins>
         <resources>
             <resource>
@@ -76,6 +83,10 @@
         <repository>
             <id>jordanosterberg-repo</id>
             <url>https://nexus-repo.jordanosterberg.com/repository/maven-releases/</url>
+        </repository>
+        <repository>
+            <id>maven-central</id>
+            <url>https://oss.sonatype.org/content/groups/public</url>
         </repository>
     </repositories>
 
